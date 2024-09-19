@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Market Analysis</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        #chart {
+            width: 100%;
+            margin: 0 auto;
+            max-width: 900px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stock Market Analysis</h1>
+
+    <div class="input-group">
+        <label for="stock1">Enter the first stock symbol:</label>
+        <input type="text" id="stock1" placeholder="e.g., AAPL" required>
+    </div>
+
+    <div class="input-group">
+        <label for="stock2">Enter the second stock symbol:</label>
+        <input type="text" id="stock2" placeholder="e.g., GOOGL" required>
+    </div>
+
+    <div class="input-group">
+        <label for="start_date">Enter the start date (YYYY-MM-DD):</label>
+        <input type="date" id="start_date" required>
+    </div>
+
+    <div class="input-group">
+        <label for="end_date">Enter the end date (YYYY-MM-DD):</label>
+        <input type="date" id="end_date" required>
+    </div>
+
+    <button onclick="analyzeStocks()">Analyze</button>
+
+    <div id="chart"></div>
+
+    <script>
+        async function analyzeStocks() {
+            const stock1 = document.getElementById('stock1').value;
+            const stock2 = document.getElementById('stock2').value;
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+
+            if (!stock1 || !stock2 || !startDate || !endDate) {
+                alert("Please fill in all fields");
+                return;
+            }
+
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `stock1=${stock1}&stock2=${stock2}&start_date=${startDate}&end_date=${endDate}`
+            });
+
+            const data = await response.json();
+
+            const stock1Data = data.stock1.map(item => ({ x: item.Date, y: item['Adj Close'] }));
+            const stock2Data = data.stock2.map(item => ({ x: item.Date, y: item['Adj Close'] }));
+
+            const trace1 = {
+                x: stock1Data.map(item => item.x),
+                y: stock1Data.map(item => item.y),
+                mode: 'lines',
+                name: stock1,
+                line: { color: 'red' }
+            };
+
+            const trace2 = {
+                x: stock2Data.map(item => item.x),
+                y: stock2Data.map(item => item.y),
+                mode: 'lines',
+                name: stock2,
+                line: { color: 'green' }
+            };
+
+            const layout = {
+                title: `Stock Prices for ${stock1} and ${stock2}`,
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Price (USD)' }
+            };
+
+            Plotly.newPlot('chart', [trace1, trace2], layout);
+        }
+    </script>
+    </body>
+</html>
