@@ -5,56 +5,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Market Analysis</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        #chart {
-            width: 100%;
-            margin: 0 auto;
-            max-width: 900px;
-        }
-    </style>
+    <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
-    <h1>Stock Market Analysis</h1>
 
-    <div class="input-group">
-        <label for="stock1">Enter the first stock symbol:</label>
-        <input type="text" id="stock1" placeholder="e.g., AAPL" required>
-    </div>
+    <!-- Header Section -->
+    <header>
+        <h1>Stock Market Analysis</h1>
+        <p>Analyze and compare stock trends interactively</p>
+    </header>
 
-    <div class="input-group">
-        <label for="stock2">Enter the second stock symbol:</label>
-        <input type="text" id="stock2" placeholder="e.g., GOOGL" required>
-    </div>
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <h2>Enter Stock Symbols and Date Range</h2>
+            <form id="stockForm">
+                <div class="input-group">
+                    <input type="text" id="stock1" placeholder="Enter first stock symbol (e.g., SPY)" required>
+                    <input type="text" id="stock2" placeholder="Enter second stock symbol (e.g., GOOGL)" required>
+                    <input type="date" id="start_date" required>
+                    <input type="date" id="end_date" required>
+                </div>
+                <button type="button" onclick="analyzeStocks()">Analyze</button>
+            </form>
+        </div>
+    </section>
 
-    <div class="input-group">
-        <label for="start_date">Enter the start date (YYYY-MM-DD):</label>
-        <input type="date" id="start_date" required>
-    </div>
+    <!-- Buttons Section (Hidden Initially) -->
+    <section class="buttons-container" id="chart-buttons">
+        <button onclick="showChart('line-chart')">Line Chart</button>
+        <button onclick="showChart('candlestick-chart')">Candlestick Chart</button>
+        <button onclick="showChart('volume-chart')">Volume</button>
+        <button onclick="showChart('ema-sma-chart')">EMA/SMA</button>
+        <button onclick="showChart('rsi-chart')">RSI</button>
+        <button onclick="showChart('macd-chart')">MACD</button>
+    </section>
 
-    <div class="input-group">
-        <label for="end_date">Enter the end date (YYYY-MM-DD):</label>
-        <input type="date" id="end_date" required>
-    </div>
+    <!-- Line Chart Section -->
+    <section class="chart-section" id="line-chart">
+        <h3>Stock Comparison: Line Chart</h3>
+        <div id="line-chart-container" class="chart-box"></div>
+    </section>
 
-    <button onclick="analyzeStocks()">Analyze</button>
+    <!-- Candlestick Charts -->
+    <section class="chart-section" id="candlestick-chart">
+        <h3>Candlestick Charts</h3>
+        <div id="candlestick-chart-1" class="chart-box"></div>
+        <div id="candlestick-chart-2" class="chart-box"></div>
+    </section>
 
-    <div id="chart"></div>
+    <!-- Volume Charts -->
+    <section class="chart-section" id="volume-chart">
+        <h3>Volume Charts</h3>
+        <div id="volume-chart-1" class="chart-box"></div>
+        <div id="volume-chart-2" class="chart-box"></div>
+    </section>
+
+    <!-- EMA/SMA Charts -->
+    <section class="chart-section" id="ema-sma-chart">
+        <h3>EMA/SMA Charts</h3>
+        <div id="ema-sma-chart-1" class="chart-box"></div>
+        <div id="ema-sma-chart-2" class="chart-box"></div>
+    </section>
+
+    <!-- RSI Charts -->
+    <section class="chart-section" id="rsi-chart">
+        <h3>RSI Charts</h3>
+        <div id="rsi-chart-1" class="chart-box"></div>
+        <div id="rsi-chart-2" class="chart-box"></div>
+    </section>
+
+    <!-- MACD Charts -->
+    <section class="chart-section" id="macd-chart">
+        <h3>MACD Charts</h3>
+        <div id="macd-chart-1" class="chart-box"></div>
+        <div id="macd-chart-2" class="chart-box"></div>
+    </section>
 
     <script>
+        function showChart(chartId) {
+            const chartSections = document.querySelectorAll('.chart-section');
+            chartSections.forEach(section => section.style.display = 'none');
+            document.getElementById(chartId).style.display = 'block';
+        }
+
         async function analyzeStocks() {
             const stock1 = document.getElementById('stock1').value;
             const stock2 = document.getElementById('stock2').value;
@@ -66,6 +100,9 @@
                 return;
             }
 
+            document.getElementById("hero").classList.add("hero-shrink");
+            document.getElementById("chart-buttons").style.display = "block"; 
+
             const response = await fetch('/analyze', {
                 method: 'POST',
                 headers: {
@@ -76,33 +113,270 @@
 
             const data = await response.json();
 
-            const stock1Data = data.stock1.map(item => ({ x: item.Date, y: item['Adj Close'] }));
-            const stock2Data = data.stock2.map(item => ({ x: item.Date, y: item['Adj Close'] }));
+            const stock1Data = data.stock1.map(item => ({
+                x: item.Date,
+                close: item['Close'],
+            }));
+            const stock2Data = data.stock2.map(item => ({
+                x: item.Date,
+                close: item['Close'],
+            }));
 
-            const trace1 = {
-                x: stock1Data.map(item => item.x),
-                y: stock1Data.map(item => item.y),
-                mode: 'lines',
-                name: stock1,
-                line: { color: 'red' }
-            };
+           
+            showChart('line-chart');
 
-            const trace2 = {
-                x: stock2Data.map(item => item.x),
-                y: stock2Data.map(item => item.y),
-                mode: 'lines',
-                name: stock2,
-                line: { color: 'green' }
-            };
 
-            const layout = {
+            Plotly.newPlot('line-chart-container', [
+                {
+                    x: stock1Data.map(item => item.x),
+                    y: stock1Data.map(item => item.close),
+                    mode: 'lines',
+                    name: stock1,
+                    line: { color: 'red' }
+                },
+                {
+                    x: stock2Data.map(item => item.x),
+                    y: stock2Data.map(item => item.close),
+                    mode: 'lines',
+                    name: stock2,
+                    line: { color: 'green' }
+                }
+            ], {
                 title: `Stock Prices for ${stock1} and ${stock2}`,
-                xaxis: { title: 'Date' },
-                yaxis: { title: 'Price (USD)' }
-            };
+                xaxis: { showticklabels: false },
+                yaxis: { title: 'Price (USD)' },
+                margin: { t: 50, b: 40, l: 50, r: 50 },
+                width: window.innerWidth * 0.9  
+            });
 
-            Plotly.newPlot('chart', [trace1, trace2], layout);
+            Plotly.newPlot('candlestick-chart-1', [{
+                x: stock1Data.map(item => item.x),
+                open: data.stock1.map(item => item.Open),
+                high: data.stock1.map(item => item.High),
+                low: data.stock1.map(item => item.Low),
+                close: stock1Data.map(item => item.close),
+                type: 'candlestick',
+                increasing: { line: { color: 'green' } },
+                decreasing: { line: { color: 'red' } }
+            }], {
+                title: `${stock1} Candlestick`,
+                xaxis: { showticklabels: false },
+                margin: { t: 50, b: 40, l: 50, r: 50 },
+                width: window.innerWidth * 0.9  
+            });
+
+            Plotly.newPlot('candlestick-chart-2', [{
+                x: stock2Data.map(item => item.x),
+                open: data.stock2.map(item => item.Open),
+                high: data.stock2.map(item => item.High),
+                low: data.stock2.map(item => item.Low),
+                close: stock2Data.map(item => item.close),
+                type: 'candlestick',
+                increasing: { line: { color: 'green' } },
+                decreasing: { line: { color: 'red' } }
+            }], {
+                title: `${stock2} Candlestick`,
+                xaxis: { showticklabels: false },
+                margin: { t: 50, b: 40, l: 50, r: 50 },
+                width: window.innerWidth * 0.9 
+            });
+
+
+            Plotly.newPlot('volume-chart-1', [{
+                x: stock1Data.map(item => item.x),
+                y: data.stock1.map(item => item.Volume),
+                type: 'bar',
+                name: `${stock1} Volume`,
+                marker: { color: 'blue' }
+            }], {
+                title: `${stock1} Volume`,
+                xaxis: { showticklabels: false },
+                yaxis: { title: 'Volume' },
+                margin: { t: 50, b: 40, l: 50, r: 50 },
+                width: window.innerWidth * 0.9  
+            });
+
+            Plotly.newPlot('volume-chart-2', [{
+                x: stock2Data.map(item => item.x),
+                y: data.stock2.map(item => item.Volume),
+                type: 'bar',
+                name: `${stock2} Volume`,
+                marker: { color: 'orange' }
+            }], {
+                title: `${stock2} Volume`,
+                xaxis: { showticklabels: false },
+                yaxis: { title: 'Volume' },
+                margin: { t: 50, b: 40, l: 50, r: 50 },
+                width: window.innerWidth * 0.9 
+            });
+
+            const ema1 = calculateEMA(data.stock1, 14);
+            const sma1 = calculateSMA(data.stock1, 14);
+            const ema2 = calculateEMA(data.stock2, 14);
+            const sma2 = calculateSMA(data.stock2, 14);
+
+            Plotly.newPlot('ema-sma-chart-1', [{
+                x: stock1Data.map(item => item.x),
+                y: ema1,
+                mode: 'lines',
+                name: `${stock1} EMA (14)`,
+                line: { color: 'green' }
+            }, {
+                x: stock1Data.map(item => item.x),
+                y: sma1,
+                mode: 'lines',
+                name: `${stock1} SMA (14)`,
+                line: { color: 'purple' }
+            }], {
+                title: `${stock1} EMA/SMA`,
+                xaxis: { showticklabels: false },
+                yaxis: { title: 'Price (USD)' },
+                margin: { t: 50, b: 40, l: 50, r: 50 },
+                width: window.innerWidth * 0.9 
+            });
+
+            Plotly.newPlot('ema-sma-chart-2', [{
+                x: stock2Data.map(item => item.x),
+                y: ema2,
+                mode: 'lines',
+                name: `${stock2} EMA (14)`,
+                line: { color: 'green' }
+            }, {
+                x: stock2Data.map(item => item.x),
+                y: sma2,
+                mode: 'lines',
+                name: `${stock2} SMA (14)`,
+                line: { color: 'purple' }
+            }], {
+                title: `${stock2} EMA/SMA`,
+                xaxis: { showticklabels: false },
+                yaxis: { title: 'Price (USD)' },
+                margin: { t: 50, b: 40, l: 50, r: 50 },
+                width: window.innerWidth * 0.9 
+            });
+
+            const rsi1 = calculateRSI(data.stock1, 14);
+            const rsi2 = calculateRSI(data.stock2, 14);
+
+            Plotly.newPlot('rsi-chart-1', [{
+                x: stock1Data.map(item => item.x),
+                y: rsi1,
+                mode: 'lines',
+                name: `${stock1} RSI (14)`,
+                line: { color: 'blue' }
+            }], {
+                title: `${stock1} RSI`,
+                xaxis: { showticklabels: false },
+                yaxis: { title: 'RSI' },
+                margin: { t: 50, b: 40, l: 50, r: 50 },
+                width: window.innerWidth * 0.9  
+            });
+
+            Plotly.newPlot('rsi-chart-2', [{
+                x: stock2Data.map(item => item.x),
+                y: rsi2,
+                mode: 'lines',
+                name: `${stock2} RSI (14)`,
+                line: { color: 'orange' }
+            }], {
+                title: `${stock2} RSI`,
+                xaxis: { showticklabels: false },
+                yaxis: { title: 'RSI' },
+                margin: { t: 50, b: 40, l: 50, r: 50 },
+                width: window.innerWidth * 0.9  
+            });
+
+            const macd1 = calculateMACD(data.stock1);
+            const macd2 = calculateMACD(data.stock2);
+
+            Plotly.newPlot('macd-chart-1', [{
+                x: stock1Data.map(item => item.x),
+                y: macd1.macd,
+                mode: 'lines',
+                name: `${stock1} MACD`,
+                line: { color: 'green' }
+            }, {
+                x: stock1Data.map(item => item.x),
+                y: macd1.signal,
+                mode: 'lines',
+                name: `${stock1} Signal Line`,
+                line: { color: 'red' }
+            }], {
+                title: `${stock1} MACD`,
+                xaxis: { showticklabels: false },
+                yaxis: { title: 'MACD' },
+                margin: { t: 50, b: 40, l: 50, r: 50 },
+                width: window.innerWidth * 0.9  
+            });
+
+            Plotly.newPlot('macd-chart-2', [{
+                x: stock2Data.map(item => item.x),
+                y: macd2.macd,
+                mode: 'lines',
+                name: `${stock2} MACD`,
+                line: { color: 'green' }
+            }, {
+                x: stock2Data.map(item => item.x),
+                y: macd2.signal,
+                mode: 'lines',
+                name: `${stock2} Signal Line`,
+                line: { color: 'red' }
+            }], {
+                title: `${stock2} MACD`,
+                xaxis: { showticklabels: false },
+                yaxis: { title: 'MACD' },
+                margin: { t: 50, b: 40, l: 50, r: 50 },
+                width: window.innerWidth * 0.9
+            });
+        }
+
+        function calculateEMA(data, window) {
+            const alpha = 2 / (window + 1);
+            let emaArray = [];
+            data.forEach((item, i) => {
+                if (i === 0) {
+                    emaArray.push(item['Close']);
+                } else {
+                    emaArray.push(item['Close'] * alpha + emaArray[i - 1] * (1 - alpha));
+                }
+            });
+            return emaArray;
+        }
+
+        function calculateSMA(data, window) {
+            return data.map((_, i, arr) =>
+                i >= window - 1
+                    ? arr.slice(i - window + 1, i + 1).reduce((acc, item) => acc + item['Close'], 0) / window
+                    : null
+            );
+        }
+
+        function calculateRSI(data, window) {
+            let gains = 0, losses = 0, rs, rsi;
+            const rsiArray = [];
+
+            for (let i = 1; i < data.length; i++) {
+                let change = data[i]['Close'] - data[i - 1]['Close'];
+                gains += Math.max(0, change);
+                losses += Math.abs(Math.min(0, change));
+
+                if (i >= window) {
+                    rs = gains / losses;
+                    rsi = 100 - 100 / (1 + rs);
+                    rsiArray.push(rsi);
+                }
+            }
+            return rsiArray;
+        }
+
+        function calculateMACD(data) {
+            const ema12 = calculateEMA(data, 12);
+            const ema26 = calculateEMA(data, 26);
+            const macd = ema12.map((value, index) => value - ema26[index]);
+            const signal = calculateEMA(macd, 9);
+            return { macd, signal };
         }
     </script>
-    </body>
+
+</body>
 </html>
